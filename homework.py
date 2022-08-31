@@ -28,13 +28,54 @@ class Name(Field):
 
 
 class Phone(Field):
-    def __init__(self, phone):
-        self.value = phone
+    def __init__(self):
+        self._value = ''
+
+    @property
+    def value(self):
+        """
+        getter for phone
+        :return: self._value
+        """
+        return self._value
+
+    @value.setter
+    def value(self, x):
+        """
+        setter for phone
+        :param x:
+        """
+        if x.isdigit():
+            self._value = x
+        else:
+            print('Number is not digit')
 
 
 class Birthday(Field):
-    def __init__(self, birthday):
-        self.value = datetime(year=datetime.now().year, month=int(birthday[1]), day=int(birthday[2]))
+    def __init__(self):
+        self._value = ''
+
+    @property
+    def value(self):
+        """
+        getter for birthday
+        :return: self._value
+        """
+        return self._value
+
+    @value.setter
+    def value(self, x):
+        """
+        setter for birthday
+        :param x:
+        :return:
+        """
+        if isinstance(x, datetime):
+            self._value = x
+        elif len(x.split('-')) == 3:
+            self._value = datetime(year=datetime.now().year, month=int(x.split('-')[1]), day=int(x.split('-')[2]))
+        else:
+            print('Birthday entered incorrectly')
 
 
 class Record(Field):
@@ -42,12 +83,17 @@ class Record(Field):
         self.name = Name(new_name)
         self.phones = []
         if birthday:
-            self.birthday = Birthday(birthday.split('-'))
+            self.birthday = Birthday()
+            self.birthday.value = birthday
         else:
             self.birthday = birthday
 
     def days_to_birthday(self):
-        if self.birthday is not None:
+        """
+        Returns the number of days until the contact's birthday
+        :return:
+        """
+        if self.birthday.value:
             now = datetime.now()
             if int(self.birthday.value.month) <= int(now.month) and int(self.birthday.value.day) != int(now.day):
                 self.birthday.value = self.birthday.value.replace(year=2023)
@@ -57,22 +103,44 @@ class Record(Field):
             return 'You did not enter a birthday'
 
     def add_contact(self, new_phone):
-        self.phones.append(Phone(new_phone))
+        """
+        Adds contact in adressbook
+        :param new_phone:
+        """
+        phone = Phone()
+        phone.value = new_phone
+        self.phones.append(phone)
 
     def change_phone(self, old_phone, new_phone):
+        """
+        Changes an existing number
+        :param old_phone:
+        :param new_phone:
+        """
         if self.get_phone(old_phone):
-            self.phones.append(Phone(new_phone))
+            phone = Phone()
+            phone.value = new_phone
+            self.phones.append(phone)
             self.phones.remove(self.get_phone(old_phone))
         else:
             print('The phone number not exist')
 
     def delete_phone(self, phone):
+        """
+        Deletes a number
+        :param phone:
+        """
         if self.get_phone(phone):
             self.phones.remove(self.get_phone(phone))
         else:
             print('The phone number not exist')
 
     def get_phone(self, new_phone):
+        """
+        Checks if a number exists,
+        :param new_phone:
+        :return: phone or False
+        """
         for phone in self.phones:
             if phone.value == new_phone:
                 return phone
