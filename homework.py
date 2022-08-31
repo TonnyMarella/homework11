@@ -1,4 +1,5 @@
 from collections import UserDict
+from datetime import datetime, timedelta
 
 
 class Field:
@@ -14,6 +15,12 @@ class AddressBook(UserDict, Field):
     def add_record(self, record):
         self.data[record.name.value] = record
 
+    def iterator(self, n):
+        result = []
+        for key, value in self.data.items():
+            result.append({key: value})
+        return result[:n]
+
 
 class Name(Field):
     def __init__(self, name):
@@ -25,10 +32,29 @@ class Phone(Field):
         self.value = phone
 
 
+class Birthday(Field):
+    def __init__(self, birthday):
+        self.value = datetime(year=datetime.now().year, month=int(birthday[1]), day=int(birthday[2]))
+
+
 class Record(Field):
-    def __init__(self, new_name):
+    def __init__(self, new_name, birthday=None):
         self.name = Name(new_name)
         self.phones = []
+        if birthday:
+            self.birthday = Birthday(birthday.split('-'))
+        else:
+            self.birthday = birthday
+
+    def days_to_birthday(self):
+        if self.birthday is not None:
+            now = datetime.now()
+            if int(self.birthday.value.month) <= int(now.month) and int(self.birthday.value.day) != int(now.day):
+                self.birthday.value = self.birthday.value.replace(year=2023)
+            days_to_birthday = self.birthday.value - now + timedelta(days=1)
+            return days_to_birthday.days
+        else:
+            return 'You did not enter a birthday'
 
     def add_contact(self, new_phone):
         self.phones.append(Phone(new_phone))
@@ -83,14 +109,23 @@ def main():
                       list(map(lambda x: x.value, adressbook.data[name].phones)))
             else:
                 print('Enter correct name')
+        elif a == 'show_iter':
+            count = int(input('Enter the number of entries:\n'))
+            print(adressbook.iterator(count))
+        elif a == 'birthday':
+            name = input('Enter name:\n')
+            if adressbook.is_data(name):
+                record_change = adressbook.data[name]
+                print('Days to birthday:', record_change.days_to_birthday())
 
         elif a.split()[0] == 'add':  # Add contact
             name, phone = get_name_and_phone()
+            birthday = input('Enter birthday(Y-M-D) or skip(enter):\n')
             if len(phone.split()) > 1:
                 print('Enter ONE phone number')
             else:
                 if name and phone:
-                    record_add = Record(name.lower())
+                    record_add = Record(name.lower(), birthday if birthday != '' else None)
                     record_add.add_contact(phone)
                     adressbook.add_record(record_add)
                 else:
