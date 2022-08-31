@@ -72,7 +72,8 @@ class Birthday(Field):
         """
         if isinstance(x, datetime):
             self._value = x
-        elif len(x.split('-')) == 3:
+        elif len(x.split('-')) == 3 and int(x.split('-')[0]) <= 2022 and int(x.split('-')[1]) <= 12 and int(
+                x.split('-')[2]) <= 31:
             self._value = datetime(year=datetime.now().year, month=int(x.split('-')[1]), day=int(x.split('-')[2]))
         else:
             print('Birthday entered incorrectly')
