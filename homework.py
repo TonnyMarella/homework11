@@ -6,8 +6,8 @@ class Field:
 
 
 class AddressBook(UserDict, Field):
-    def get_data(self, name):
-        if name in self.data.keys():
+    def is_data(self, name):
+        if name in self.data:
             return True
         return False
 
@@ -34,22 +34,22 @@ class Record(Field):
         self.phones.append(Phone(new_phone))
 
     def change_phone(self, old_phone, new_phone):
-        if self.is_exist(old_phone):
+        if self.get_phone(old_phone):
             self.phones.append(Phone(new_phone))
-            self.phones.remove(self.is_exist(old_phone))
+            self.phones.remove(self.get_phone(old_phone))
         else:
             print('The phone number not exist')
 
     def delete_phone(self, phone):
-        if self.is_exist(phone):
-            self.phones.remove(self.is_exist(phone))
+        if self.get_phone(phone):
+            self.phones.remove(self.get_phone(phone))
         else:
             print('The phone number not exist')
 
-    def is_exist(self, phone):
-        for i in self.phones:
-            if i.value == phone:
-                return i
+    def get_phone(self, new_phone):
+        for phone in self.phones:
+            if phone.value == new_phone:
+                return phone
         return False
 
 
@@ -78,7 +78,7 @@ def main():
             print(adressbook.data)
         elif a == 'show':  # Show one contact
             name = input('Enter name:\n')
-            if adressbook.get_data(name):
+            if adressbook.is_data(name):
                 print('name:', adressbook.data[name].name.value, 'phone:',
                       list(map(lambda x: x.value, adressbook.data[name].phones)))
             else:
@@ -99,7 +99,7 @@ def main():
         elif a.split()[0] == 'change_phone':  # Change contact number
             name, phone = get_name_and_phone()
             new_phone = input('Enter new phone\n')
-            if adressbook.get_data(name):
+            if adressbook.is_data(name):
                 record_change = adressbook.data[name]
                 record_change.change_phone(old_phone=phone, new_phone=new_phone)
             else:
@@ -107,7 +107,7 @@ def main():
 
         elif a.split()[0] == 'add_phone':  # Add contact number
             name, phone = get_name_and_phone()
-            if adressbook.get_data(name):
+            if adressbook.is_data(name):
                 record_add_phone = adressbook.data[name]
                 record_add_phone.add_contact(phone)
             else:
@@ -115,7 +115,7 @@ def main():
 
         elif a.split()[0] == 'delete':  # Delete contact number
             name, phone = get_name_and_phone()
-            if adressbook.get_data(name):
+            if adressbook.is_data(name):
                 record_delete = adressbook.data[name]
                 record_delete.delete_phone(phone)
             else:
