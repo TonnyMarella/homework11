@@ -105,7 +105,7 @@ class Record(Field):
 
     def add_contact(self, new_phone):
         """
-        Adds contact in adressbook
+        Adds contact to adressbook
         :param new_phone:
         """
         phone = Phone()
