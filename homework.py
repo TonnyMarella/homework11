@@ -1,5 +1,10 @@
 from collections import UserDict
 from datetime import datetime, timedelta
+import re
+
+from simple_commands import simple
+from show_commands import show
+from phone_commands import phone_command
 
 
 class Field:
@@ -7,7 +12,7 @@ class Field:
 
 
 class AddressBook(UserDict, Field):
-    def is_data(self, name):
+    def is_data(self, name) -> bool:
         if name in self.data:
             return True
         return False
@@ -15,11 +20,9 @@ class AddressBook(UserDict, Field):
     def add_record(self, record):
         self.data[record.name.value] = record
 
-    def iterator(self, n):
-        result = []
-        for key, value in self.data.items():
-            result.append({key: value})
-        return result[:n]
+    def iterator(self):
+        for key, record in self.data.items():
+            yield key, record
 
 
 class Name(Field):
@@ -40,15 +43,15 @@ class Phone(Field):
         return self._value
 
     @value.setter
-    def value(self, x):
+    def value(self, phone):
         """
         setter for phone
-        :param x:
+        :param phone:
         """
-        if x.isdigit():
-            self._value = x
+        if re.match(r'^\+1?\d{9,20}$', phone):
+            self._value = phone
         else:
-            print('Number is not digit')
+            print('Number must be minimum 9 digits maximum 20 and start with \'+\'')
 
 
 class Birthday(Field):
@@ -64,17 +67,15 @@ class Birthday(Field):
         return self._value
 
     @value.setter
-    def value(self, x):
+    def value(self, birthday):
         """
         setter for birthday
-        :param x:
+        :param birthday:
         :return:
         """
-        if isinstance(x, datetime):
-            self._value = x
-        elif len(x.split('-')) == 3 and int(x.split('-')[0]) <= 2022 and int(x.split('-')[1]) <= 12 and int(
-                x.split('-')[2]) <= 31:
-            self._value = datetime(year=datetime.now().year, month=int(x.split('-')[1]), day=int(x.split('-')[2]))
+        if int(birthday.year) <= 2022 and int(birthday.month) <= 12 and int(birthday.day) <= 31:
+            self._value = datetime(year=datetime.now().year, month=int(birthday.month),
+                                   day=int(birthday.day))
         else:
             print('Birthday entered incorrectly')
 
@@ -83,25 +84,23 @@ class Record(Field):
     def __init__(self, new_name, birthday=None):
         self.name = Name(new_name)
         self.phones = []
+        self.birthday = Birthday()
         if birthday:
-            self.birthday = Birthday()
             self.birthday.value = birthday
-        else:
-            self.birthday = birthday
 
     def days_to_birthday(self):
         """
         Returns the number of days until the contact's birthday
         :return:
         """
-        if self.birthday.value:
-            now = datetime.now()
-            if int(self.birthday.value.month) <= int(now.month) and int(self.birthday.value.day) != int(now.day):
-                self.birthday.value = self.birthday.value.replace(year=2023)
-            days_to_birthday = self.birthday.value - now + timedelta(days=1)
-            return days_to_birthday.days
-        else:
+        if not self.birthday:
             return 'You did not enter a birthday'
+        now = datetime.now()
+        if int(self.birthday.value.month) <= int(now.month) and int(self.birthday.value.day) != int(now.day):
+            days_to_birthday = self.birthday.value - now.replace(year=(int(now.year) - 1)) + timedelta(days=1)
+            return days_to_birthday.days
+        days_to_birthday = self.birthday.value - now + timedelta(days=1)
+        return days_to_birthday.days
 
     def add_contact(self, new_phone):
         """
@@ -131,8 +130,9 @@ class Record(Field):
         Deletes a number
         :param phone:
         """
-        if self.get_phone(phone):
-            self.phones.remove(self.get_phone(phone))
+        current_phone = self.get_phone(phone)
+        if current_phone:
+            self.phones.remove(current_phone)
         else:
             print('The phone number not exist')
 
@@ -161,69 +161,18 @@ def main():
     adressbook = AddressBook()
 
     while True:
-        a = input('Enter command:\n').lower()
-        if a == '.':
+        command = input('Enter command:\n').lower()
+        if command == '.':
             break
-        elif a in ("good bye", "close", "exit"):
-            print("Good Bye!")
-            break
-        elif a == 'hello':
-            print('How can I help you?')
-        elif a == 'show all':  # Show all contacts
-            print(adressbook.data)
-        elif a == 'show':  # Show one contact
-            name = input('Enter name:\n')
-            if adressbook.is_data(name):
-                print('name:', adressbook.data[name].name.value, 'phone:',
-                      list(map(lambda x: x.value, adressbook.data[name].phones)))
-            else:
-                print('Enter correct name')
-        elif a == 'show_iter':
-            count = int(input('Enter the number of entries:\n'))
-            print(adressbook.iterator(count))
-        elif a == 'birthday':
+        simple(command)
+        show(command, adressbook)
+        phone_command(command, adressbook, get_name_and_phone, Record)
+
+        if command == 'birthday':
             name = input('Enter name:\n')
             if adressbook.is_data(name):
                 record_change = adressbook.data[name]
                 print('Days to birthday:', record_change.days_to_birthday())
-
-        elif a.split()[0] == 'add':  # Add contact
-            name, phone = get_name_and_phone()
-            birthday = input('Enter birthday(Y-M-D) or skip(enter):\n')
-            if len(phone.split()) > 1:
-                print('Enter ONE phone number')
-            else:
-                if name and phone:
-                    record_add = Record(name.lower(), birthday if birthday != '' else None)
-                    record_add.add_contact(phone)
-                    adressbook.add_record(record_add)
-                else:
-                    print('Enter correct name and phone')
-
-        elif a.split()[0] == 'change_phone':  # Change contact number
-            name, phone = get_name_and_phone()
-            new_phone = input('Enter new phone\n')
-            if adressbook.is_data(name):
-                record_change = adressbook.data[name]
-                record_change.change_phone(old_phone=phone, new_phone=new_phone)
-            else:
-                print('Enter correct name')
-
-        elif a.split()[0] == 'add_phone':  # Add contact number
-            name, phone = get_name_and_phone()
-            if adressbook.is_data(name):
-                record_add_phone = adressbook.data[name]
-                record_add_phone.add_contact(phone)
-            else:
-                print('Enter correct name')
-
-        elif a.split()[0] == 'delete':  # Delete contact number
-            name, phone = get_name_and_phone()
-            if adressbook.is_data(name):
-                record_delete = adressbook.data[name]
-                record_delete.delete_phone(phone)
-            else:
-                print('Enter correct name')
 
 
 if __name__ == '__main__':
