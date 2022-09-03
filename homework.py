@@ -7,8 +7,21 @@ from show_commands import show
 from phone_commands import phone_command
 
 
-class Field:
-    pass
+class Field():
+    def __init__(self):
+        self._value = ''
+
+    @property
+    def value(self):
+        """
+        getter for phone and birthday
+        :return: self._value
+        """
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
 
 class AddressBook(UserDict, Field):
@@ -26,23 +39,11 @@ class AddressBook(UserDict, Field):
 
 
 class Name(Field):
-    def __init__(self, name):
-        self.value = name
+    pass
 
 
 class Phone(Field):
-    def __init__(self):
-        self._value = ''
-
-    @property
-    def value(self):
-        """
-        getter for phone
-        :return: self._value
-        """
-        return self._value
-
-    @value.setter
+    @Field.value.setter
     def value(self, phone):
         """
         setter for phone
@@ -55,18 +56,7 @@ class Phone(Field):
 
 
 class Birthday(Field):
-    def __init__(self):
-        self._value = ''
-
-    @property
-    def value(self):
-        """
-        getter for birthday
-        :return: self._value
-        """
-        return self._value
-
-    @value.setter
+    @Field.value.setter
     def value(self, birthday):
         """
         setter for birthday
@@ -80,9 +70,10 @@ class Birthday(Field):
             print('Birthday entered incorrectly')
 
 
-class Record(Field):
+class Record():
     def __init__(self, new_name, birthday=None):
-        self.name = Name(new_name)
+        self.name = Name()
+        self.name.value = new_name
         self.phones = []
         self.birthday = Birthday()
         if birthday:
@@ -117,11 +108,13 @@ class Record(Field):
         :param old_phone:
         :param new_phone:
         """
-        if self.get_phone(old_phone):
+        current_phone = self.get_phone(old_phone)
+        if current_phone:
             phone = Phone()
             phone.value = new_phone
-            self.phones.append(phone)
-            self.phones.remove(self.get_phone(old_phone))
+            phone_examination = self.phones.append(phone)
+            if phone_examination == phone:
+                self.phones.remove(current_phone)
         else:
             print('The phone number not exist')
 
