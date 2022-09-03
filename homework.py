@@ -7,7 +7,7 @@ from show_commands import show
 from phone_commands import phone_command
 
 
-class Field():
+class Field:
     def __init__(self):
         self._value = ''
 
@@ -26,9 +26,7 @@ class Field():
 
 class AddressBook(UserDict, Field):
     def is_data(self, name) -> bool:
-        if name in self.data:
-            return True
-        return False
+        return name in self.data
 
     def add_record(self, record):
         self.data[record.name.value] = record
