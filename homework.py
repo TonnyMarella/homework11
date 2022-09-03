@@ -68,7 +68,7 @@ class Birthday(Field):
             print('Birthday entered incorrectly')
 
 
-class Record():
+class Record:
     def __init__(self, new_name, birthday=None):
         self.name = Name()
         self.name.value = new_name
